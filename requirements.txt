@@ -1,6 +1,6 @@
-streamlit
-openai
+streamlit>=1.36.0
+google-adk>=1.0.0
+litellm
 python-dotenv
-rapidfuzz
-numpy
-google-adk
+pytest
+pandas
