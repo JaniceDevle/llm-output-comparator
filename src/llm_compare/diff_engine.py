@@ -24,25 +24,43 @@ class ComparisonResult:
 
 def split_into_chunks(text: str) -> list[str]:
     """
-    Split text into sentence-like chunks.
+    Split model output into readable comparison chunks.
 
-    The goal is not perfect linguistic parsing.
-    The goal is stable, readable highlighting for demo use.
+    Handles normal sentences and common Markdown bullet/numbered lists.
     """
-    cleaned = re.sub(r"\s+", " ", text.strip())
+    cleaned = text.strip()
 
     if not cleaned:
         return []
 
-    chunks = re.split(r"(?<=[.!?。！？])\s+", cleaned)
+    # Keep markdown list items as separate chunks.
+    lines = [line.strip() for line in cleaned.splitlines() if line.strip()]
 
-    # If the model returns bullet points without punctuation, split by bullet markers too.
-    final_chunks: list[str] = []
-    for chunk in chunks:
-        bullet_parts = re.split(r"\s+(?=[\-*•]\s+|\d+\.\s+)", chunk)
-        final_chunks.extend(part.strip() for part in bullet_parts if part.strip())
+    chunks: list[str] = []
 
-    return final_chunks
+    for line in lines:
+        # Remove common markdown emphasis to improve matching.
+        line = re.sub(r"\*\*(.*?)\*\*", r"\1", line)
+        line = re.sub(r"__(.*?)__", r"\1", line)
+
+        # Headings are useful as chunks.
+        if re.match(r"^#{1,6}\s+", line):
+            chunks.append(re.sub(r"^#{1,6}\s+", "", line).strip())
+            continue
+
+        # Bullet or numbered list item.
+        if re.match(r"^(\-|\*|•|\d+\.)\s+", line):
+            chunks.append(line)
+            continue
+
+        # Otherwise split paragraph into sentences.
+        sentence_parts = re.split(r"(?<=[.!?。！？])\s+", line)
+        chunks.extend(part.strip() for part in sentence_parts if part.strip())
+
+    # Filter tiny chunks like "1." or "2."
+    chunks = [chunk for chunk in chunks if len(chunk.strip()) > 3]
+
+    return chunks
 
 
 def similarity(a: str, b: str) -> float:

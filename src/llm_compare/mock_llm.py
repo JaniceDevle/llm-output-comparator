@@ -6,41 +6,36 @@ def mock_response(model_name: str, prompt: str) -> str:
     """
 
     prompt_lower = prompt.lower()
+    model_lower = model_name.lower()
 
     if "sqlite" in prompt_lower:
-        if "4.1" in model_name:
+        if "reasoner" in model_lower:
             return (
-                "SQLite is lightweight and easy to embed in small web applications. "
-                "It requires almost no server administration. "
-                "It is a good choice for prototypes, local tools, and low-traffic apps. "
-                "However, it is not ideal for heavy concurrent writes or complex multi-user workloads."
+                "SQLite is an embedded database that can work very well for a small web application. "
+                "Its advantages are simple deployment, low operational overhead, and good performance for read-heavy workloads. "
+                "It is suitable for prototypes, internal tools, and low-traffic services. "
+                "However, it can become a poor fit when the application needs high write concurrency, complex user permissions, or horizontal scaling."
             )
 
         return (
-            "SQLite is a simple embedded database that works well for small applications. "
-            "It is easy to deploy because there is no separate database server. "
-            "It is suitable for prototypes and low-traffic web apps. "
-            "For high write concurrency or large multi-user systems, PostgreSQL may be safer."
+            "SQLite is lightweight and easy to use in small web applications. "
+            "It does not require a separate database server, which makes deployment simple. "
+            "It works well for prototypes and low-traffic apps. "
+            "For large multi-user systems with many concurrent writes, PostgreSQL or MySQL may be a better choice."
         )
 
     if "python" in prompt_lower:
-        if "4.1" in model_name:
+        if "reasoner" in model_lower:
             return (
-                "Python is readable, productive, and supported by a large ecosystem. "
-                "It is widely used for web development, automation, data analysis, and AI. "
-                "Its disadvantages include slower runtime performance and occasional packaging complexity."
+                "Python is popular because it optimizes developer productivity. "
+                "Its strengths include readable syntax, a large package ecosystem, and strong support for automation, data analysis, and AI. "
+                "Its weaknesses include slower runtime speed and occasional dependency-management problems."
             )
 
         return (
-            "Python is popular because it has clear syntax and many libraries. "
-            "It is useful for automation, backend services, data science, and machine learning. "
-            "Compared with compiled languages, it can be slower and dependency management can become difficult."
-        )
-
-    if "climate" in prompt_lower:
-        return (
-            f"{model_name} mock answer: Climate change is driven mainly by greenhouse gas emissions. "
-            "Common mitigation strategies include renewable energy, energy efficiency, electrification, and better land use."
+            "Python is readable, productive, and supported by many libraries. "
+            "It is commonly used for scripting, backend development, data science, and machine learning. "
+            "Compared with compiled languages, it can be slower and packaging can become difficult."
         )
 
     return (

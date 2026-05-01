@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 
+from src.llm_compare.adk_client import call_two_models
 from src.llm_compare.diff_engine import compare_texts, segments_to_html
 from src.llm_compare.mock_llm import mock_response
 from src.llm_compare.settings import get_settings
@@ -65,10 +66,8 @@ with st.sidebar:
     st.header("Model settings")
 
     model_options = [
-        "openai/gpt-4.1-mini",
-        "openai/gpt-4o-mini",
-        "openai/gpt-4.1",
-        "openai/gpt-4o",
+        "deepseek/deepseek-chat",
+        "deepseek/deepseek-reasoner",
     ]
 
     model_a = st.selectbox("Model A", model_options, index=0)
@@ -102,16 +101,40 @@ if run_button:
         st.error("Please enter a prompt.")
         st.stop()
 
-    if not mock_mode and not settings.openai_api_key:
-        st.error("OPENAI_API_KEY is missing. Add it to your .env file or enable Mock mode.")
+    if not mock_mode and not settings.deepseek_api_key:
+        st.error("DEEPSEEK_API_KEY is missing. Add it to your .env file or enable Mock mode.")
         st.stop()
 
     with st.spinner("Generating model responses..."):
-        if mock_mode:
-            response_a = mock_response(model_a, prompt)
-            response_b = mock_response(model_b, prompt)
-        else:
-            st.error("Real model calls are not implemented yet. We will add Google ADK in the next step.")
+        try:
+            if mock_mode:
+                response_a = mock_response(model_a, prompt)
+                response_b = mock_response(model_b, prompt)
+            else:
+                response_a, response_b = call_two_models(model_a, model_b, prompt)
+        except Exception as exc:
+            error_text = str(exc)
+
+            if "Insufficient Balance" in error_text:
+                st.error(
+                    "DeepSeek API call failed: insufficient account balance. "
+                    "Please recharge the DeepSeek account or enable Mock mode for demo testing."
+                )
+            elif "authentication" in error_text.lower() or "api key" in error_text.lower():
+                st.error(
+                    "DeepSeek API authentication failed. "
+                    "Please check DEEPSEEK_API_KEY in the .env file."
+                )
+            elif "model" in error_text.lower():
+                st.error(
+                    "Model call failed. Please check that the model names are valid, "
+                    "for example deepseek/deepseek-chat and deepseek/deepseek-reasoner."
+                )
+            else:
+                st.error("Model call failed. See technical details below.")
+                with st.expander("Technical error details"):
+                    st.exception(exc)
+
             st.stop()
 
     comparison = compare_texts(response_a, response_b)
